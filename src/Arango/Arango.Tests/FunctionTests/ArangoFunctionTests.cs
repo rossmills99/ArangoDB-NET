@@ -106,6 +106,16 @@ namespace Arango.Tests.FunctionTests
             Assert.AreEqual(true, created2);
             
             var functions = db.Function.Get();
+            // sort the result. the database doesn't guarantee result order 
+            functions.Sort(
+                delegate(Document l, Document r)
+                {
+    	            String leftKey = l.String("name");
+    	            String rightKey = l.String("name");
+    	
+    	            return leftKey.CompareTo(rightKey);
+                }
+            );
             
             Assert.AreEqual(2, functions.Count);
             Assert.AreEqual(name1, functions[0].String("name"));
