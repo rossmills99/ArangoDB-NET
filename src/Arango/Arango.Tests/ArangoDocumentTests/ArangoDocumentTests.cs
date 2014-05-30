@@ -395,6 +395,52 @@ namespace Arango.Tests.ArangoDocumentTests
             Assert.AreEqual(person.Aliased, returnedPerson.Aliased);
         }
         
+        [Test()]
+        public void Should_create_and_get_document_from_object_with_dictionaries()
+	{ 
+		Database.CreateTestCollection(Database.TestDocumentCollectionName);
+		var db = new ArangoDatabase(Database.Alias);
+
+		var alert = new Alert();
+
+		alert.PurchasedBy = new Dictionary<string, DateTime>();
+		alert.PurchasedBy.Add("x", DateTime.Now);
+		alert.PurchasedBy.Add("y", DateTime.Now);
+
+		var person = new Person();
+		person.FirstName = "Luke";
+		person.LastName = "Skywalker";
+		person.Age = 25;
+
+		var p1 = new Person();
+		p1.FirstName  = "Hans";
+		p1.LastName = "Schmidth";
+		p1.Age = 20;
+		var relation1 = new Dictionary<string, Person>();
+		relation1.Add("first", p1);
+
+		alert.Relations = new Dictionary<string, Dictionary<string, Person>>();
+		alert.Relations.Add("first-relation", relation1);
+
+		db.Document.Create(Database.TestDocumentCollectionName, alert);
+
+		var getResult = db.Document.Get<Alert>(alert.ThisIsId);
+
+		Assert.AreEqual(0, getResult.StatusCode);
+		Assert.AreEqual(true, getResult is Alert);
+		Assert.AreEqual(2, getResult.PurchasedBy.Count);
+		Assert.AreEqual(true, getResult.PurchasedBy.ContainsKey("x"));
+		Assert.AreEqual(true, getResult.PurchasedBy.ContainsKey("y"));
+
+		Assert.AreEqual(alert.PurchasedBy, getResult.PurchasedBy);
+		Assert.AreEqual(alert.Relations.Count, getResult.Relations.Count);
+		Assert.AreEqual(alert.Relations.Keys, getResult.Relations.Keys);
+		Assert.AreEqual(alert.Relations["first-relation"].Keys, getResult.Relations["first-relation"].Keys);
+		Assert.AreEqual(alert.Relations["first-relation"]["first"].Age, getResult.Relations["first-relation"]["first"].Age);
+		Assert.AreEqual(alert.Relations["first-relation"]["first"].FirstName, getResult.Relations["first-relation"]["first"].FirstName);
+		Assert.AreEqual(alert.Relations["first-relation"]["first"].LastName, getResult.Relations["first-relation"]["first"].LastName);
+
+	}
         public void Dispose()
         {
             Database.DeleteTestCollection(Database.TestDocumentCollectionName);

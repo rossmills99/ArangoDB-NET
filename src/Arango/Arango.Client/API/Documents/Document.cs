@@ -1473,7 +1473,50 @@ namespace Arango.Client
             
             return collectionObject;
         }
-        
+        private void ConvertToDictionary(IDictionary dictionary, Document document)
+	{
+		if (dictionary == null)
+		{
+			return ;
+		}
+
+		Type [] types = dictionary.GetType().GetGenericArguments();
+		Type keyType = types.First();
+		Type valueType = types.Last();
+
+		foreach(KeyValuePair<string, object> elem in document)
+		{   Type srcType = elem.Value.GetType();
+
+			if (valueType.IsArray)
+			{
+				throw new NotImplementedException("not yed supported");
+			}
+			else if  (srcType.IsPrimitive ||
+					(srcType == typeof(string)) ||
+					(srcType == typeof(DateTime)) ||
+					(srcType == typeof(decimal)))
+			{
+				dictionary.Add(elem.Key, System.Convert.ChangeType(elem.Value, valueType));
+			}
+			// dictionary contains complex values 
+			else
+			{
+				// create instance object based on first element of generic collection
+				var instance = Activator.CreateInstance(valueType, null);
+
+				if (srcType == typeof(Document))
+				{ 
+					dictionary.Add(elem.Key, ToObject(instance, (Document)elem.Value));
+				}
+				else
+				{
+					dictionary.Add(elem.Key, System.Convert.ChangeType(elem.Value, valueType));
+				} 
+			}
+		}
+
+	}
+			
         #endregion
 
         /// <summary> 
@@ -1742,11 +1785,13 @@ namespace Arango.Client
                 {
                     (genericObject as Document).SetField(item.Key, item.Value);
                 }
+            } 
+            else if (genericObject is IDictionary) {
+            	ConvertToDictionary((IDictionary) genericObject, document);
             }
-            else
-            {
+            {PropertyInfo [] arr = genericObjectType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                 foreach (PropertyInfo propertyInfo in genericObjectType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                {
+                {   
                     var propertyName = propertyInfo.Name;
                     // HACK: arango specific properties check
                     var arangoProperties = propertyInfo.GetCustomAttributes(typeof(ArangoProperty), true);
@@ -1786,7 +1831,7 @@ namespace Arango.Client
                     
                     // property is a collection
                     if ((propertyInfo.PropertyType.IsArray || 
-                         propertyInfo.PropertyType.IsGenericType))
+                         fieldValue is IList))
                     {
                         var instance = Activator.CreateInstance(propertyInfo.PropertyType);
                             
@@ -1829,6 +1874,14 @@ namespace Arango.Client
             return genericObject;
         }
         
+        private static IEnumerable<DictionaryEntry> CastDict(IDictionary dictionary)
+        {
+        	foreach (DictionaryEntry entry in dictionary)
+        	{
+        		yield return entry;
+        	}
+        }
+        
         /// <summary> 
         /// Converts generic object to it's document representation.
         /// </summary>
@@ -1839,11 +1892,13 @@ namespace Arango.Client
             {
                 return inputObject as Document;
             }
-            else if (inputObject is Dictionary<string, object>)
-            {
+            else if (inputObject is IDictionary)
+            {   IDictionary idictionary = (IDictionary) inputObject;
+            	Dictionary<string, object>  dictionary = CastDict(idictionary).ToDictionary( entry => (string)entry.Key,
+            	                                                            entry => entry.Value);
                 var document = new Document();
                 
-                foreach (KeyValuePair<string, object> field in inputObject as Dictionary<string, object>)
+                foreach (KeyValuePair<string, object> field in dictionary as Dictionary<string, object>)
                 {
                     document.Object(field.Key, field.Value);
                 }
@@ -1886,13 +1941,13 @@ namespace Arango.Client
                     }
                     
                     var propertyValue = propertyInfo.GetValue(inputObject, null);
-                    
+                     
                     if (propertyValue == null)
                     {
                         document.SetField(propertyName, null);
                     }
                     // property is array or collection
-                    else if (propertyInfo.PropertyType.IsArray || propertyInfo.PropertyType.IsGenericType)
+                    else if (propertyInfo.PropertyType.IsArray || propertyValue is IList)
                     {
                         document.SetField(propertyName, ToList(propertyValue));
                     }
