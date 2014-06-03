@@ -1890,14 +1890,18 @@ namespace Arango.Client
                     if (propertyValue == null)
                     {
                         document.SetField(propertyName, null);
+                        continue;
                     }
+                        
+                    Type propertyValueType = propertyValue.GetType();
+
                     // property is array or collection
-                    else if (propertyInfo.PropertyType.IsArray || propertyInfo.PropertyType.IsGenericType)
+                    if (propertyValueType.IsArray || propertyValueType.IsGenericType)
                     {
                         document.SetField(propertyName, ToList(propertyValue));
                     }
                     // property is class except the string type since string values are parsed differently
-                    else if (propertyInfo.PropertyType.IsClass && (propertyInfo.PropertyType.Name != "String"))
+                    else if (propertyValueType.IsClass && (propertyValueType != typeof(string) ))
                     {
                         document.SetField(propertyName, ToDocument(propertyValue));
                     }

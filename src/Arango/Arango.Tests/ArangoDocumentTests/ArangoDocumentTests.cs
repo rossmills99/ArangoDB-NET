@@ -394,7 +394,38 @@ namespace Arango.Tests.ArangoDocumentTests
             Assert.AreEqual(person.Age, returnedPerson.Age);
             Assert.AreEqual(person.Aliased, returnedPerson.Aliased);
         }
-        
+
+        [Test()]
+        public void Should_create_document_from_generic_object_with_object_type_properties()
+        {
+            Database.CreateTestCollection(Database.TestDocumentCollectionName);
+            var db = Database.GetTestDatabase();
+
+            var person = new Person();
+            person.FirstName = "Johny";
+            person.LastName = "Bravo";
+            person.Age = 25;
+            person.objTypeProperty = "I Am Object";
+
+            db.Document.Create(Database.TestDocumentCollectionName, person);
+            
+            // Object type property can be string
+            var returnedPerson = db.Document.Get<Person>(person.ThisIsId);
+            Assert.IsInstanceOf<string>(returnedPerson.objTypeProperty);
+
+            // Object type property can be integer
+            person.objTypeProperty = 42;
+            Assert.IsTrue(db.Document.Update<Person>(person));
+            var updatedPerson = db.Document.Get<Person>(person.ThisIsId);
+            Assert.IsInstanceOf<long>((long) updatedPerson.objTypeProperty);
+
+            // Object type property can be boolean
+            person.objTypeProperty = true;
+            Assert.IsTrue(db.Document.Update<Person>(person));
+            updatedPerson = db.Document.Get<Person>(person.ThisIsId);
+            Assert.IsInstanceOf<bool>((bool) updatedPerson.objTypeProperty);
+        }
+
         public void Dispose()
         {
             Database.DeleteTestCollection(Database.TestDocumentCollectionName);
