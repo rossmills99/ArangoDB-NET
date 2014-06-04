@@ -439,7 +439,6 @@ namespace Arango.Tests.ArangoDocumentTests
 		Assert.AreEqual(alert.Relations["first-relation"]["first"].Age, getResult.Relations["first-relation"]["first"].Age);
 		Assert.AreEqual(alert.Relations["first-relation"]["first"].FirstName, getResult.Relations["first-relation"]["first"].FirstName);
 		Assert.AreEqual(alert.Relations["first-relation"]["first"].LastName, getResult.Relations["first-relation"]["first"].LastName);
-
 	}
         public void Dispose()
         {

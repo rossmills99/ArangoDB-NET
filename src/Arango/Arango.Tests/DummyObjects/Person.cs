@@ -24,6 +24,8 @@ namespace Arango.Tests
         public string LastName { get; set; }
         public int Age { get; set; }
         public Person Father { get; set; }
+
+        public object objTypeProperty { get; set; }
         
         [ArangoProperty(Serializable = false)]
         public string ShouldBeOnlyDeserialized { get; set; }

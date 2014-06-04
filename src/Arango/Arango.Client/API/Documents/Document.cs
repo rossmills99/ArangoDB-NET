@@ -1486,9 +1486,9 @@ namespace Arango.Client
 
 		foreach(KeyValuePair<string, object> elem in document)
 		{   Type srcType = elem.Value.GetType();
-
+            
 			if (valueType.IsArray)
-			{
+			{   
 				throw new NotImplementedException("not yed supported");
 			}
 			else if  (srcType.IsPrimitive ||

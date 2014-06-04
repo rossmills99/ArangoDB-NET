@@ -23,15 +23,28 @@ namespace Arango.Tests.VersionTests
         	Assert.IsTrue(version.Minor >= 0);
         	Assert.IsTrue(version.PatchLevel >= 0);
         	
-        	Assert.IsTrue(version.toInt() >= 13000);
+        	Assert.IsTrue(version.toInt() >= 10300);
         	
         	Regex re = new Regex(@"^\d+\.\d+\.\d+.*$");
         	Assert.IsTrue(re.IsMatch(version.Version));
         }
+
+        [Test()]
+        public void Should_convert_to_int()
+        {
+            ArangoVersion version = new ArangoVersion("2.1.0");
+            Assert.IsTrue(version.toInt() == 20100);
+
+            version = new ArangoVersion("2.0.0");
+            Assert.IsTrue(version.toInt() == 20000);
+
+            version = new ArangoVersion("1.4.8");
+            Assert.IsTrue(version.toInt() == 10408);
+        }
         
         public void Dispose()
         {
-        	    Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
+        	Database.DeleteTestDatabase(Database.TestDatabaseGeneral);
         }
     }
 }
